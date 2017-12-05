@@ -1,0 +1,119 @@
+---
+title: "Compound Interest Shiny App"
+author: "Tarvela"
+date: "5 décembre 2017"
+output: ioslides_presentation
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(knitr)
+library(kableExtra)
+```
+
+## Introduction
+
+Compound interest is present in most banking applications used in day to day operations. A good understanding is needed to make most of our savings potential and to make a good retirement planning.
+
+\newline \newline
+
+*“Compound interest is the eighth wonder of the world. He who understands it, earns it ... he who doesn't ... pays it.”*
+
+- Albert Einstein
+
+##The following application will:
+- Calculate possible earnings from savings
+- Have an idea of loan interests
+- Help me pass to the Coursera class "Developping Data Products" :)
+
+
+## Parameters
+The following parameters can be set in the app:
+
+* Annual investment returns
+* Investment returns variation
+* Annual inflation
+* Inflation variation
+
+## Slide with R Output
+As an example of compound interest the following lines will simulate a 5 year deposit of 1000$ at 5%
+```{r cars, echo = TRUE, warning=FALSE}
+x <- NULL
+x$Years <- 1:5
+x$money <- 1000*(1.05^x$Years)
+x
+```
+
+## Slide with Plot
+
+```{r ,echo=FALSE}
+library(shiny)
+shinyApp(
+  
+  ui = fluidPage(
+  # Application title
+  titlePanel("Compound Interest Calculator"),
+  
+  # Parameters 
+  sidebarLayout(
+    sidebarPanel(
+      textInput("initialSum", "Initial Investment", value = 1000000, width = NULL, placeholder = NULL),
+       sliderInput("return",
+                   "Annual return of Investments (%)",
+                   min = -10,
+                   max = 20,
+                   value = 5),
+      sliderInput("returnVar",
+                  "Investment returns variation (+/- %)",
+                  min = 0,
+                  max = 5,
+                  value = 1),
+       sliderInput("inflation",
+                   "Annual inflation (%)",
+                   min = -10,
+                   max = 10,
+                   value = 2),
+      sliderInput("inflationVar",
+                  "Inflation variation (+/- %)",
+                  min = 0,
+                  max = 5,
+                  value = 0)
+    ),
+    # Show a plot of the generated distribution
+    mainPanel(
+      tabsetPanel(
+        tabPanel("Plot",plotOutput("distPlot")),
+        tabPanel("Documentation", verbatimTextOutput("doc"))
+      )
+    )
+  )
+),
+server = function(input, output) {
+  output$doc <- renderText({ "Compound Interest Calculator
+This simple application helps to visualize the possible returns of a sum knowing the return rate, the return rate variation, the inflation and inflation variation.
+
+To use this app the user only has to enter each parameter and visualize the plot.
+    " })
+  output$distPlot <- renderPlot({
+    x<-NULL
+    correctedReturn <- ((1+(input$return/100))/(1+(input$inflation/100)))
+    x$Years <- 1:20
+    test<- as.integer(input$initialSum)
+    cat(test+1)
+    x$cR <- ((correctedReturn)^(x$Years)*test)
+    x$mincR <- ((correctedReturn*(1-(input$returnVar/100))*(1-(input$inflationVar/100)))^(x$Years)*test)
+    x$maxcR <- ((correctedReturn*(1+(input$returnVar/100))*(1+(input$inflationVar/100)))^(x$Years)*test)
+  
+    plot(x= x$Years, y=((x$cR)), type='l',col = 'darkgray',	xlab="Years", ylab="Dollars [$]", main="Compound Interest Graph", ylim=c(min(x$mincR),max(x$maxcR)))
+    lines(x$Years, x$mincR, col = 'grey')
+    lines(x$Years, x$maxcR, col = 'grey')
+    polygon(c(x$Years, rev(x$Years)), c(x$maxcR, rev(x$mincR)),
+            col = rgb(0.1,0.5,0.3,0.1), border = NA)
+  })
+},
+options = list(height = 1500)
+)
+
+```
+
